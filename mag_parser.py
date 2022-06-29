@@ -14,6 +14,7 @@ def give_chrome_option(folder_path):
            "download.prompt_for_download": False,
            "download.directory_upgrade": True}  #set path
     chromeOptions.add_experimental_option("prefs", prefs) #set option
+    chromeOptions.add_argument("--headless")
     return chromeOptions
 
 def get_csv(folder_path):
@@ -26,17 +27,25 @@ mag_adress='''https://cpk.msu.ru/daily/dep_01_m
 https://cpk.msu.ru/daily/dep_02_m
 https://cpk.msu.ru/daily/dep_03_m
 https://cpk.msu.ru/daily/dep_04_m
-https://cpk.msu.ru/daily/dep_05_m'''.split('\n')
+https://cpk.msu.ru/daily/dep_05_m
+https://cpk.msu.ru/daily/dep_22_m
+https://cpk.msu.ru/daily/dep_38_m
+https://cpk.msu.ru/daily/dep_31_m
+https://cpk.msu.ru/daily/dep_09_m'''.split('\n')
 
 facks='''Мехмат
 ВМК
 Физфак
 Химфак
-Биофак'''.split('\n')
+Биофак
+ФФФХИ
+Биотех
+ГУ
+Наука о материалах'''.split('\n')
 
 
 
-def get_mag_list():    
+def get_mags():    
     folder_path = r'C:\FSR_Data' + '\\'    
     for index in range(len(mag_adress)):
         driver= webdriver.Chrome(ChromeDriverManager().install(), chrome_options = give_chrome_option(folder_path))
@@ -97,19 +106,19 @@ def get_mag_info(data, fac):
                     ID = string_data[0].text
                     phone = string_data[1].text
                     name = string_data[2].text
-                    if numpy.int64(ID) in main_base['ID'].unique():
-                        continue
+                    if name in main_base['ФИО'].unique():
+                        if not phone in str(main_base.loc[main_base['ФИО'] == name, 'Номер']):
+                            main_base.loc[main_base['ФИО'] == name, 'Номер'] += r'\n' + phone
+                            main_base.to_csv(folder_path + 'base_mags.csv', index=False, encoding="utf-8")
+                        continue                    
                     else:
                         new_row = {'ID':ID, 'ФИО':name, 'Номер': phone, 'Факультет' : fac} 
                         main_base = main_base.append(new_row, ignore_index=True)
+                        main_base.sort_values('Факультет', inplace=True)
                         main_base.to_csv(folder_path + 'base_mags.csv', index=False, encoding="utf-8")
                 break
             except Exception as err:
                 print('*',err,'* - ')
                 continue       
 
-get_mag_list()
-
-### Нужно сделать сортировку по факультету и удалять дубликаты номеров
-#фффхи, биотех, фнм, гу добавить
-#сделать объединение номеров дубликатов
+#get_mag_list()
